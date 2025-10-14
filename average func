@@ -1,0 +1,11 @@
+def average(num_one, num_two, num_three):
+    return (num_one + num_two + num_three) / 3
+
+def average_list(numbers):
+    if not numbers:  # avoid division by zero
+        return 0
+    return sum(numbers) / len(numbers)
+
+print("Average of 3, 6, 9:", average(3, 6, 9))  # Output: 6.0
+print("Average of [2, 4, 6, 8]:", average_list([2, 4, 6, 8]))
+print("Average of empty list:", average_list([]))
