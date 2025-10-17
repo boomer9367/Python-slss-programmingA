@@ -1,0 +1,432 @@
+import java.util.Random;
+import java.util.Scanner;
+        //Updated 1.9 FINISHED IT YAY
+	// TOUD 0.1 code crashed, lost universal startfight class...
+	//Only ai used is for the story description
+public class Txtadventure {
+	
+	 public static void fightguard(Scanner scan, int money) {
+	        Random rand = new Random();
+
+	        int playerHealth = 50;
+	        int enemyHealth = 60;
+	        
+	        	System.out.println(" ");
+	        	System.out.println("P.S say the number to submit your move, not the name...");
+	        	
+	        while (playerHealth > 0 && enemyHealth > 0) {
+	        	System.out.println(" ");
+	            System.out.println("\n--- Your Turn ---");
+	            System.out.println("Your Health: " + playerHealth);
+	            System.out.println("Enemy Health: " + enemyHealth);
+	            System.out.println("Choose your action:");
+	            System.out.println("1. Punch (10-15 dmg)");
+	            System.out.println("2. Kick (5-25 dmg)");
+	            System.out.print("> ");
+	            String input = scan.nextLine();
+
+	            int damage = 0;
+	            if (input.equals("1")) {
+	                damage = rand.nextInt(6) + 10; // 10–15
+	                System.out.println("You punch the enemy for " + damage + " damage!");
+	            } else if (input.equals("2")) {
+	                damage = rand.nextInt(21) + 5; // 5–25
+	                System.out.println("You kick the enemy for " + damage + " damage!");
+	            } else {
+	                System.out.println("You hesitate... and do nothing.");
+	            }
+
+	            enemyHealth -= damage;
+
+	            // Check if enemy is defeated
+	            if (enemyHealth <= 0) {
+	                System.out.println("You defeated the enemy!");
+	                money += 10;
+	                break;
+	            }
+
+	            // Enemy's turn
+	            System.out.println("\n--- Enemy's Turn ---");
+	            int enemyDamage = rand.nextInt(11) + 5; // 5–15
+	            System.out.println("The enemy strikes you for " + enemyDamage + " damage!");
+	            playerHealth -= enemyDamage;
+
+	            if (playerHealth <= 0) {
+	                System.out.println("You were defeated...");
+	                System.out.println("You wake up back in your cell but this time with more restraints that you're unable to escape from...");
+	                System.out.println("This is your fate...");
+	                System.out.println("Ending 3: back where you started..");
+	                System.exit(0);
+	            }
+	        }
+	    }                                             
+	
+	 public static void fightwolf(Scanner scan, int money) {
+	 Random rand = new Random();
+
+	        int playerHealth = 50;
+	        int enemyHealth = 120;
+	        
+	        	System.out.println(" ");
+	        	
+	        while (playerHealth > 0 && enemyHealth > 0) {
+	        	System.out.println(" ");
+	            System.out.println("\n--- Your Turn ---");
+	            System.out.println("Your Health: " + playerHealth);
+	            System.out.println("Enemy Health: " + enemyHealth);
+	            System.out.println("Choose your action:");
+	            System.out.println("1. Punch (10-15 dmg)");
+	            System.out.println("2. Kick (5-25 dmg)");
+	            System.out.print("> ");
+	            String input = scan.nextLine();
+
+	            int damage = 0;
+	            if (input.equals("1")) {
+	                damage = rand.nextInt(6) + 10; // 10–15
+	                System.out.println("You punch the enemy for " + damage + " damage!");
+	            } else if (input.equals("2")) {
+	                damage = rand.nextInt(21) + 5; // 5–25
+	                System.out.println("You kick the enemy for " + damage + " damage!");
+	            } else {
+	                System.out.println("You hesitate... and do nothing.");
+	            }
+
+	            enemyHealth -= damage;
+
+	            // Check if enemy is defeated
+	            if (enemyHealth <= 0) {
+	                System.out.println("You defeated the enemy!");
+	                System.out.println("btw you were'nt supposed to actully live...");
+	                System.out.println("so heres alot of money..");
+	                money += 50;
+	                break;
+	            }
+
+	            // Enemy's turn
+	            System.out.println("\n--- Enemy's Turn ---");
+	            int enemyDamage = rand.nextInt(11) + 5; // 5–15
+	            System.out.println("The enemy strikes you for " + enemyDamage + " damage!");
+	            playerHealth -= enemyDamage;
+
+	            if (playerHealth <= 0) {
+	                System.out.println("You were defeated...");
+	                System.out.println(".");
+	                System.out.println("Ending 2: The not-so-nice ending");
+	                System.exit(0);
+	            }
+	        }
+	 }
+	 
+	 public static void denseForest(int money) {
+	 
+	 System.out.println(" ");
+	 	System.out.println("\n--- Entering the Kingdom ---");
+	 	System.out.println(" ");
+	            System.out.println("The forest is thick with towering trees");
+	            System.out.println("letting only faint light touch the forest floor.");
+	            System.out.println("Vines drape from branches and the rustle suggests you're not alone.");
+	            System.out.println("As you push deeper, the underbrush begins to thin slightly, and the trees space themselves a little wider apart."); 
+	            System.out.println("Ahead, the shadows give way to a clearing"); 
+	            System.out.println("This place feels sheltered, a perfect spot to set up camp before nightfall.");
+	            System.out.println(" ");
+	            
+	            camp(money);
+	 }
+	 
+	 public static void camp(int money) {
+	        Scanner scanner = new Scanner(System.in);
+	        Random random = new Random();
+
+	        System.out.println("You arrive at a quiet clearing and decide to make camp.");
+	        System.out.println("Do you want to (1) Rest or (2) Stay alert?");
+	        System.out.print("Enter choice: ");
+	        int choice = scanner.nextInt();
+
+	        if (choice == 1) {
+	            System.out.println("You try to get some sleep...");
+	            if (random.nextBoolean()) {
+	                System.out.println("But something attacks you in the night!");
+	                fightwolf(scanner, money);
+	            } else {
+	                System.out.println("You sleep peacefully and regain your strength.");
+	            }
+	        } else if (choice == 2) {
+	            System.out.println("You stay awake and keep watch.");
+	            if (random.nextInt(100) < 30) {
+	                System.out.println("Your watch pays off – you spot danger before it reaches you!");
+	                fightwolf(scanner, money);
+	            } else {
+	                System.out.println("The night passes uneventfully.");
+	            }
+	        } else {
+	            System.out.println("Invalid choice. You fall asleep by accident...");
+	            fightwolf(scanner, money);
+	        }
+	    }
+  
+	 public static void Kingdom() {
+	 Scanner scanner = new Scanner(System.in);
+	    System.out.println("\n--- Entering the Kingdom ---");
+	    System.out.println("The heavy iron gates creak open as you step into the heart of the kingdom.");
+	    System.out.println("The air is thick with the scent of damp stone and chimney smoke.");
+	    System.out.println("To your left, a cozy inn glows warmly — a place for rest, or perhaps rumors.");
+	    System.out.println("To your right, a bustling market hums with noise: merchants shouting, steel clinking, and whispers of trouble beyond the walls.");
+	    
+	    boolean choiceK = false;
+	    while (!choiceK) {
+	    	 System.out.println(choiceK);
+	         System.out.println("\nWhat would you like to do?");
+	         System.out.println("- Go into the Inn");
+	         System.out.println("- Go to the market");
+	         System.out.print("> ");
+	         System.out.print(" ");
+	         
+	         String choiceL = scanner.nextLine().trim();
+
+	         if (choiceL.equalsIgnoreCase("Go into the Inn")) {
+	        	 System.out.println(" ");
+	             System.out.println("You push open a set of wooden door and you see at the back a small desk with a neatly dressed woman behind it.");
+	             System.out.println(" ");
+	            	 
+	         } else if (choiceL.equalsIgnoreCase("Go into the market")) {
+	            
+	         } else {
+	             System.out.println("The voices speak inside your head.");
+	             System.out.println("You start breakdancing as the passerbys stare strangely at you.");
+	             System.out.println("You soon return to your original position.");
+	         }
+	     }
+	}
+
+	 public static void marketInteraction(Scanner scan, int money) {
+	    System.out.println("\n--- Kingdom Market ---");
+	    System.out.println("You walk into the bustling market square, where the smell of fresh produce fills the air.");
+	    System.out.println("A friendly fruit vendor waves you over to a colorful wooden cart.");
+
+	    System.out.println("\nVendor: \"Hello traveler! Care for some fresh fruit? Here's what I have today:\"");
+	    System.out.println("1. Apple - 2 gold");
+	    System.out.println("2. Banana - 3 gold");
+	    System.out.println("3. Berries - 5 gold");
+	    System.out.println("4. Leave the stall");
+
+	    System.out.print("> ");
+	    String choice = scan.nextLine();
+
+	    if (choice.equals("1")) {
+	        System.out.println("You buy a crisp apple. The vendor nods in approval.");
+	        money -= 2;
+	    } else if (choice.equals("2")) {
+	        System.out.println("You take a ripe banana. The vendor smiles: \"Good choice!\"");
+	        money -= 3;
+	    } else if (choice.equals("3")) {
+	        System.out.println("You purchase a small basket of fresh berries. They look delicious.");
+	        money -= 5;
+	    } else if (choice.equals("4")) {
+	        System.out.println("You nod politely and leave the fruit stand.");
+	        Kingdom();
+	    } else {
+	        System.out.println("The vendor looks confused. \"Didn't quite catch that.\"");
+	    }
+	}
+	 
+	 public static int innInteraction(Scanner scan, int money) {
+	    int inn_cost = 10;
+
+	    System.out.println("Welcome to the Cozy Inn!");
+	    System.out.println("Welcome to the Cozy Inn!");
+	    System.out.println("A night’s rest costs " + inn_cost + " gold. Would you like to stay? (yes/no)");
+	    String response = scan.nextLine().trim().toLowerCase();
+
+	    if (response.equals("yes")) {
+	        if (money >= inn_cost) {
+	            money -= inn_cost;
+	            System.out.println("You have a restful night at the inn. Your health is fully restored!");
+	            System.out.println("You now have " + money + " gold left.");
+	            innroom(scan);
+	        } else {
+	            System.out.println("You don't have enough gold to stay at the inn.");
+	        }
+	    } else {
+	        System.out.println("You decide not to stay at the inn.");
+	        System.out.println("You exit to see the sun set..");
+	        System.out.println("as you pass the now empty roads..");
+	        System.out.println("you suddenly feel a sharp pain to you lower spine");
+	        System.out.println("Your vision get blurred, your grasp on conscience and as you star into the stars in a pool of blood");
+	        System.out.println("You stare into the sky one last time..");
+	        System.out.println("...");
+	        System.out.println("this seems like the end...");
+	        System.out.println("Ending 4: the assinated; route 1");
+	        System.exit(0);
+	    
+	    }
+
+	    return money;
+	}
+	 
+	 public static void innroom(Scanner scan) {
+	 System.out.println(" ");
+	 System.out.println("You stare at the door number 104..");
+	     System.out.println("You twist the door knob and open the door..");
+	     System.out.println("it seems like a normal room inside");
+	     System.out.println("differnet from what you woke up in..");
+	     System.out.println("You observe the room more closely and find a lock on the door");
+	     System.out.println(" ");
+	
+	     boolean choiceH = false;
+	    while (!choiceH) {
+	    	 System.out.println(choiceH);
+	         System.out.println("\nWhat would you like to do?");
+	         System.out.println("- Lock the door");
+	         System.out.println("- Leave it unlocked");
+	         System.out.print("> ");
+	         
+	         
+	         String choiceL = scan.nextLine().trim();
+
+	         if (choiceL.equalsIgnoreCase("lock the door")) {
+	        	 System.out.print(" ");
+	             System.out.println("You push the button that locks the door..");
+	             System.out.println("and you go to bed..");
+	             System.out.println(" ");
+	             System.out.println("Later into the night you her jiggling outside your door..");
+	             System.out.println("The sound lasts for a while untill it leaves your room..");
+	             System.out.println(" ");
+	             System.out.println("In the morning you find out that a massacre had happend at your inn..");
+	             System.out.println("apparently a rouge assassin took the lives of 5 people and himself..");
+	             System.out.println(" ");
+	             System.out.println("you quickly check out of the inn in fear");
+	             System.out.println(" ");
+	             System.out.println("Ending 1: The nice ending...");
+	             System.exit(0);
+	         } else if (choiceL.equalsIgnoreCase("leave it unlocked")) {
+	        	    System.out.println("You decide to leave the door unlocked, thinking it’ll be fine for just one night.");
+	        	    System.out.println("Exhausted from the day’s journey, you lay down and drift off to sleep almost instantly.");
+	        	    System.out.println("Hours pass quietly... until a faint metallic jiggle at the door breaks the silence.");
+	        	    System.out.println("Your eyes snap open. Before you can move, the door creaks open slowly.");
+	        	    System.out.println("A shadowy figure slips inside, silent and deliberate.");
+	        	    System.out.println("You try to react, but it’s too late.");
+	        	    System.out.println("A cold blade flashes in the moonlight, and everything goes black.");
+	        	    System.out.println(" ");
+	        	    System.out.println("Ending 5: The Assassinated – Route 2");
+	        	    System.exit(0);
+	         } else {
+	             System.out.println("The voices speak inside your head... again..");
+	             System.out.println("You start breakdancing... you need to stop doing this...");
+	             System.out.println("You soon return to your original position.");
+	         }
+	     }
+	}
+	 
+	 public static void main(String args[]) {
+     
+	  //Intro
+      Scanner scan = new Scanner(System.in);
+     
+      int money = 0;
+      System.out.println("Welcome to your first adventure! What is your name?");
+     
+      String Name = scan.nextLine();
+     
+      System.out.println(" ");
+      System.out.println("Ah, " +Name+ ", Thats a nice name..");
+      System.out.println("Anyways, Let's get started!");
+      System.out.println(" ");
+     
+      //Intro
+     
+     System.out.println("You awaken in a damp and cold cell.");
+     System.out.println("Your head throbs and your throat is dry.");
+     System.out.println("A dim shaft of light filters in through a narrow barred window high above you.");
+     System.out.println("What will you do?");
+     System.out.println(" ");
+     
+      
+     Boolean haskey = false;
+     Boolean escaped = false;
+     
+     while (!escaped) {
+         System.out.println("\nWhat would you like to do?");
+         System.out.println("- Inspect the surroundings?");
+         System.out.println("- Inspect the iron gate?");
+         System.out.print("> ");
+         System.out.print(" ");
+         
+         String choice = scan.nextLine().trim();
+
+         if (choice.equalsIgnoreCase("Inspect the surroundings")) {
+        	 System.out.println(" ");
+             System.out.println("The walls are slick with condensation, the gray stones cold to the touch.");
+             System.out.println("Faint scratch marks mar the surface—some shallow and recent, others worn smooth by time.");
+             System.out.println("A rusted iron ring is bolted into the far wall, the remnants of a chain still clinging to it.");
+             System.out.println("In the corner you see broken and cracked pottery vases, as they gather cobwebs and dust.");
+             System.out.println("You also see small cracks and holes in the walls, as if someone was throwing something against it.");
+
+             //discover key
+             System.out.println(" ");
+             System.out.println("You notice a glint of metal behind one of the broken vases... it's a key!");
+             haskey = true;
+
+         } else if (choice.equalsIgnoreCase("Inspect the iron gate")) {
+             if (haskey == true) {
+            	 System.out.println(" ");
+                 System.out.println("You jiggle the key into the keyhole and with a few twists and turns, you're able to open the iron gate.");
+                 escaped = true;
+             } else {
+            	 System.out.println(" ");
+                 System.out.println("You see the keyhole, but it seems like you don't have the key...");
+             }
+         } else {
+             System.out.println("The voices speak inside your head.");
+             System.out.println("You start breakdancing within the cell as the guard stares strangely at you.");
+             System.out.println("You soon return to your original position in your cell.");
+         }
+     }
+     
+     //guard fight
+     System.out.println(" ");
+     System.out.println("As you escape from that wretched cell, you come across a dungoen guard patrolling the whereabouts.");
+     System.out.print("Guard: Hey! " +Name+ ", your supposed to be in the cell!, Get Back Here! ");
+     fightguard(scan, money);
+     
+     
+     
+     //City or forest
+     
+     System.out.print(" ");
+     System.out.print("After fleeing from the guard, you run up the dungoen stairs that are lit up by weak torches");
+     System.out.print("and find yourself outside the dungeon door.");
+     System.out.print(" ");
+     System.out.print("You see on your left a way out into the wilderness and dense forest and");
+     System.out.print("on your right you see the bustling city life withing the kingdom");
+     System.out.print(" ");
+     System.out.print("Where do you want to go?");
+     
+     boolean madechoice = false;
+     
+     while (!madechoice) {
+    	 	
+    	 	System.out.println(" ");
+    	    System.out.println("\nWhat would you like to do?");
+    	    System.out.println("- Explore the forest");
+    	    System.out.println("- Enter the kingdom");
+    	    System.out.print("> ");
+
+    	    String choice = scan.nextLine().trim();
+
+    	    if (choice.equalsIgnoreCase("Explore the forest")) {
+    	    	System.out.println("The air is thick with mist and the scent of mud and earth.");
+    	    	System.out.print("The trees are packed tightly together, their twisted branches blocking out most of the light.");
+    	    	madechoice = true;
+    	    	denseForest(money);
+    	    } else if (choice.equalsIgnoreCase("Enter the kingdom")) {
+    	    	System.out.println(" ");
+    	    	madechoice = true;
+    	    	Kingdom();
+    	    } else {
+    	        System.out.println("Unsure of what you want to do, the voices in your head speak once again.");
+    	        System.out.println("You breakdance.");
+    	    }
+    	}
+      
+  }
+}
