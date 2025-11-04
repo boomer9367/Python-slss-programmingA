@@ -3,6 +3,7 @@
 # 28 October
 # Python3 TurtleArt.py
 import turtle
+import random
 
 wn = turtle.Screen()
 t = turtle.Turtle()
@@ -10,8 +11,10 @@ t = turtle.Turtle()
 
 # methods
 def spawn_triangles(amount):
-    turtle.color("navy blue")
+    var = random.randint(0, 6)
+    turtle.color(color[var])
     turtle.goto(0, 0)
+
     if amount > 0:
         turtle.left(180)
         turtle.forward(100)
@@ -27,6 +30,8 @@ def spawn_triangles(amount):
 
 amount = 8
 turtle.pendown()
+color = ["blue", "red", "gold", "green", "purple", "orange"]
+
 
 spawn_triangles(amount)
 turtle.color("black")
