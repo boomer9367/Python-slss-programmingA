@@ -1,264 +1,324 @@
-
 # Pygame Drawing
 # Author: Justin L
 # 5 January 2026
-
-import pygame
+import heapq
 import random
 
-# COLOURS - (R, G, B)
-# CONSTANTS ALL HAVE CAPS FOR THEIR NAMES
+import pygame
+
+# ---------------- CONSTANTS
 WHITE = (255, 255, 255)
-BLACK = (  0,   0,   0)
-RED   = (255,   0,   0)
-GREEN = (  0, 255,   0)
-BLUE  = (  0,   0, 255)
-GREY  = (128, 128, 128)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+GREY = (128, 128, 128)
 
-class Block(pygame.sprite.Sprite):
-    def __init__(self, colour: pygame.Color, width: int, height: int):
-        """A block of any colour"""
+TILE_SIZE = 40
+SPRITE_SIZE = 32
+
+
+# ---------------- MAZE GENERATOR
+def generate_maze(rows, cols):
+    maze = [["1" for _ in range(cols)] for _ in range(rows)]
+
+    def in_bounds(r, c):
+        return 0 <= r < rows and 0 <= c < cols
+
+    dirs = [(-2, 0), (2, 0), (0, -2), (0, 2)]
+
+    def carve(r, c):
+        maze[r][c] = "0"
+        random.shuffle(dirs)
+        for dr, dc in dirs:
+            nr, nc = r + dr, c + dc
+            if in_bounds(nr, nc) and maze[nr][nc] == "1":
+                wall_r, wall_c = r + dr // 2, c + dc // 2
+                maze[wall_r][wall_c] = "0"
+                carve(nr, nc)
+
+    start_r = random.randrange(1, rows, 2)
+    start_c = random.randrange(1, cols, 2)
+    carve(start_r, start_c)
+
+    maze[1][0] = "0"  # Entrance
+    maze[rows - 2][cols - 1] = "0"  # Exit
+
+    return maze
+
+
+# ---------------- CAMERA
+class Camera:
+    def __init__(self, world_width, world_height, screen_width, screen_height):
+        self.camera = pygame.Rect(0, 0, world_width, world_height)
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+
+    def apply(self, entity):
+        return entity.rect.move(self.camera.topleft)
+
+    def update(self, target):
+        x = -target.rect.centerx + self.screen_width // 2
+        y = -target.rect.centery + self.screen_height // 2
+        x = min(0, x)
+        y = min(0, y)
+        x = max(-(self.camera.width - self.screen_width), x)
+        y = max(-(self.camera.height - self.screen_height), y)
+        self.camera.topleft = (x, y)
+
+
+# ---------------- GRASS BACKGROUND
+class Grass:
+    def __init__(self):
+        self.image = pygame.image.load("data/grass.png").convert()
+        self.tile_w = self.image.get_width()
+        self.tile_h = self.image.get_height()
+
+    def draw(self, screen, camera):
+        start_x = -camera.camera.x // self.tile_w * self.tile_w
+        start_y = -camera.camera.y // self.tile_h * self.tile_h
+
+        for x in range(
+            start_x, start_x + camera.screen_width + self.tile_w, self.tile_w
+        ):
+            for y in range(
+                start_y, start_y + camera.screen_height + self.tile_h, self.tile_h
+            ):
+                screen.blit(self.image, (x, y))
+
+
+# ---------------- WALL
+class Wall(pygame.sprite.Sprite):
+    def __init__(self, x, y):
         super().__init__()
+        self.image = pygame.Surface((TILE_SIZE, TILE_SIZE))
+        self.image.fill(GREY)
+        self.rect = self.image.get_rect(topleft=(x, y))
 
-        # Visual representation of our image
-        self.image = pygame.Surface((width, height))
-        # change the colour of self.image
-        self.image.fill(colour)
 
-        # A Rect tells you two things:
-        #   - how big the hitbox is (width, height)
-        #   - where it is (x, y)
-        self.rect = self.image.get_rect()
-        self.rect.centerx = 100
-        self.rect.centery = 100
-
+# ---------------- BLOCK (COIN)
+class Block(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface((20, 10))
+        self.image.fill(BLUE)
+        self.rect = self.image.get_rect(center=(x, y))
         self.point_value = 1
 
-    def level_up(self, val: int):
-        """Incr point value"""
-        self.point_value *= val
 
+# ---------------- PLAYER
 class Mario(pygame.sprite.Sprite):
-    def __init__(self):
-        """The player"""
+    def __init__(self, x, y):
         super().__init__()
-
-        # Right version of Mario and Left version
-        self.image_right =  pygame.image.load("assets/mario-snes.png")
-        self.image_right = pygame.transform.scale_by(self.image_right, 0.5)
+        self.image_right = pygame.image.load("data/mario-snes.png").convert_alpha()
+        self.image_right = pygame.transform.smoothscale(
+            self.image_right, (SPRITE_SIZE, SPRITE_SIZE)
+        )
         self.image_left = pygame.transform.flip(self.image_right, True, False)
-
         self.image = self.image_right
-        self.rect = self.image.get_rect()
-
-        self.previous_x = 0               # help with direction
+        self.rect = self.image.get_rect(midbottom=(x, y))
         self.health = 100
         self.points = 0
 
-    def calc_damage(self, amt: int) -> int:
-        """Decrease player health by amt
-        Returns:
-            Remaining health"""
-        self.health -= amt
-        return self.health
+    def update(self, walls):
+        keys = pygame.key.get_pressed()
+        speed = 4
 
-    def incr_score(self, amt: int) -> int:
-        """Increases player score by amt
-        Returns:
-            Score"""
-        self.points += amt
-        return self.points
-
-    def get_damage_percentage(self) -> float:
-        return self.health / 100
-
-    def update(self):
-        """Update Mario's location based on the mouse pos
-        Update Mario's image based on where he's going"""
-        self.rect.center = pygame.mouse.get_pos()
-
-        # If Mario's previous x less than current x
-        #   Then Mario is facing Right
-        # If Mario's previous x is greater than current x
-        #   Then Mario is facing Left
-        if self.previous_x < self.rect.x:
-            self.image = self.image_right
-        elif self.previous_x > self.rect.x:
+        old_x = self.rect.x
+        if keys[pygame.K_a]:
+            self.rect.x -= speed
             self.image = self.image_left
+        if keys[pygame.K_d]:
+            self.rect.x += speed
+            self.image = self.image_right
+        if pygame.sprite.spritecollideany(self, walls):
+            self.rect.x = old_x
 
-        self.previous_x = self.rect.x
+        old_y = self.rect.y
+        if keys[pygame.K_w]:
+            self.rect.y -= speed
+        if keys[pygame.K_s]:
+            self.rect.y += speed
+        if pygame.sprite.spritecollideany(self, walls):
+            self.rect.y = old_y
 
+    def incr_score(self, amt):
+        self.points += amt
+
+    def calc_damage(self, amt):
+        self.health -= amt
+
+
+# ---------------- ASTAR PATHFINDING
+def astar(grid, start, goal):
+    rows, cols = len(grid), len(grid[0])
+
+    def heuristic(a, b):
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+    open_set = []
+    heapq.heappush(open_set, (heuristic(start, goal), 0, start, [start]))
+    visited = set()
+    while open_set:
+        _, cost, current, path = heapq.heappop(open_set)
+        if current == goal:
+            return path[1:]
+        if current in visited:
+            continue
+        visited.add(current)
+        r, c = current
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 0:
+                heapq.heappush(
+                    open_set,
+                    (
+                        cost + 1 + heuristic((nr, nc), goal),
+                        cost + 1,
+                        (nr, nc),
+                        path + [(nr, nc)],
+                    ),
+                )
+    return []
+
+
+# ---------------- ENEMY (PATHFINDING GOOMBA)
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, x, y):
         super().__init__()
-        self.image = pygame.image.load("assets/goomba-nes.png")
-        self.rect = self.image.get_rect()
-
-        self.vel_x = 0
-        self.vel_y = 0
-
+        self.image = pygame.image.load("data/goomba.png").convert_alpha()
+        self.image = pygame.transform.smoothscale(
+            self.image, (SPRITE_SIZE, SPRITE_SIZE)
+        )
+        self.rect = self.image.get_rect(midbottom=(x, y))
         self.damage = 1
+        self.path = []
+        self.speed = 2
 
-    def update(self):
-        # movement in the x- and y-axis
-        self.rect.x += self.vel_x
-        self.rect.y += self.vel_y
+    def update(self, grid, player):
+        start_tile = (self.rect.centery // TILE_SIZE, self.rect.centerx // TILE_SIZE)
+        goal_tile = (player.rect.centery // TILE_SIZE, player.rect.centerx // TILE_SIZE)
 
-    def level_up(self):
-        # increase damage
-        self.damage *= 2
+        if not self.path or random.random() < 0.02:
+            self.path = astar(grid, start_tile, goal_tile)
 
+        if self.path:
+            target_r, target_c = self.path[0]
+            target_x = target_c * TILE_SIZE + TILE_SIZE // 2
+            target_y = target_r * TILE_SIZE + TILE_SIZE // 2
+
+            dx = target_x - self.rect.centerx
+            dy = target_y - self.rect.centery
+            dist = (dx**2 + dy**2) ** 0.5
+
+            if dist < self.speed:
+                self.rect.center = (target_x, target_y)
+                self.path.pop(0)
+            else:
+                self.rect.x += self.speed * dx / dist
+                self.rect.y += self.speed * dy / dist
+
+
+# ---------------- HEALTH BAR
 class HealthBar(pygame.Surface):
-    def __init__(self, width: int, height: int):
-        self._width = width
-        self._height = height
+    def __init__(self, width, height):
         super().__init__((width, height))
+        self.width = width
+        self.height = height
 
+    def update_info(self, percentage):
         self.fill(RED)
+        pygame.draw.rect(self, GREEN, (0, 0, int(self.width * percentage), self.height))
 
-    def update_info(self, percentage: float):
-        """Updates the healthbar with the given percentage"""
-        self.fill(RED)
-        pygame.draw.rect(self, GREEN, (0, 0, percentage * self._width, self._height))
 
+# ---------------- GAME
 def game():
     pygame.init()
+    SCREEN_WIDTH = 800
+    SCREEN_HEIGHT = 600
 
-    # CONSTANTS
-    WIDTH = 800
-    HEIGHT = 600
-    SIZE = (WIDTH, HEIGHT)
+    ROWS = 21
+    COLS = 31
+    MAZE = generate_maze(ROWS, COLS)
+    WORLD_WIDTH = COLS * TILE_SIZE
+    WORLD_HEIGHT = ROWS * TILE_SIZE
 
-    # Creating the Screen
-    screen = pygame.display.set_mode(SIZE)
-    pygame.display.set_caption("Collect Blocks")
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Maze Game")
 
-    # Variables
-    done = False
     clock = pygame.time.Clock()
-    num_enemies = 5
-    num_blocks = 100
+    done = False
+
+    camera = Camera(WORLD_WIDTH, WORLD_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT)
+    grass = Grass()
+
+    wall_sprites = pygame.sprite.Group()
+    block_sprites = pygame.sprite.Group()
+    enemy_sprites = pygame.sprite.Group()
+
+    # Build maze
+    for row, line in enumerate(MAZE):
+        for col, char in enumerate(line):
+            x = col * TILE_SIZE
+            y = row * TILE_SIZE
+            if char == "1":
+                wall_sprites.add(Wall(x, y))
+            elif char == "0" and random.random() < 0.15:
+                block_sprites.add(Block(x + TILE_SIZE // 2, y + TILE_SIZE // 2))
+
+    # Pathfinding grid
+    path_grid = [[1 if char == "1" else 0 for char in row] for row in MAZE]
+
+    # Player spawn
+    player = Mario(TILE_SIZE * 1 + TILE_SIZE // 2, TILE_SIZE * 1 + TILE_SIZE)
+    # Enemy spawn
+    enemy_sprites.add(
+        Enemy(WORLD_WIDTH - TILE_SIZE * 1.5, WORLD_HEIGHT - TILE_SIZE * 1.5)
+    )
+
     health_bar = HealthBar(200, 10)
-    level = 1
 
-    # Create a Sprite Group
-    all_sprites_group = pygame.sprite.Group()
-    block_sprites_group = pygame.sprite.Group()
-    enemy_sprites_group = pygame.sprite.Group()
-
-    # Create Enemies
-    for _ in range(num_enemies):
-        # Create an enemy
-        enemy = Enemy()
-        # Randomize movement
-        random_x = random.choice([-5, -3, -1, 1, 3, 5])
-        random_y = random.choice([-5, -3, -1, 1, 3, 5])
-        enemy.vel_x, enemy.vel_y = random_x, random_y
-        # Start them in the middle
-        enemy.rect.center = (WIDTH/2, HEIGHT/2)
-
-        all_sprites_group.add(enemy)
-        enemy_sprites_group.add(enemy)
-
-    # Create 100 blocks
-    # Randomly place them throughout the screen
-    for _ in range(num_blocks):
-        block = Block(BLUE, 20, 10)
-        # Choose a random position for it
-        block.rect.centerx = random.randrange(0, WIDTH)
-        block.rect.centery = random.randrange(0, HEIGHT)
-
-        all_sprites_group.add(block)
-        block_sprites_group.add(block)
-
-    # Create a player
-    player = Mario()
-    player.rect.center = (WIDTH / 2, HEIGHT / 2)
-    # Add the player to the sprite group
-    all_sprites_group.add(player)
-
-    # ------------ MAIN GAME LOOP
+    # ---------------- LOOP
     while not done:
-        # ------ MAIN EVENT LISTENER
-        # when the user does something
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 done = True
 
-        # ------ GAME LOGIC
-        all_sprites_group.update()
+        player.update(wall_sprites)
+        for enemy in enemy_sprites:
+            enemy.update(path_grid, player)
+        camera.update(player)
 
-        # Keep enemies in screen
-        for enemy in enemy_sprites_group:
-            if enemy.rect.left < 0 or enemy.rect.right > WIDTH:
-                enemy.vel_x = -enemy.vel_x
-            if enemy.rect.top < 0 or enemy.rect.bottom > HEIGHT:
-                enemy.vel_y = -enemy.vel_y
+        # Player collects blocks
+        for block in pygame.sprite.spritecollide(player, block_sprites, True):
+            player.incr_score(block.point_value)
 
-        # Collision between Player and Blocks
-        blocks_collided = pygame.sprite.spritecollide(player, block_sprites_group, True)
-        # if the blocks_collided list has something in it
-        # print Mario has collided with a block!
-        for block in blocks_collided:
-            if type(block) is Block:
-                print("Player score: ", player.incr_score(block.point_value))
-
-        # Fill blocks if block list is empty
-        # Add more blocks and add one enemy
-        if not block_sprites_group:
-            level += 1
-
-            for _ in range(num_blocks):
-                block = Block(BLUE, 20, 10)
-                # Choose a random position for it
-                block.rect.centerx = random.randrange(0, WIDTH)
-                block.rect.centery = random.randrange(0, HEIGHT)
-
-                block.level_up(level)
-
-                all_sprites_group.add(block)
-                block_sprites_group.add(block)
-
-            enemy = Enemy()
-            random_x = random.choice([-5, -3, -1, 1, 3, 5])
-            random_y = random.choice([-5, -3, -1, 1, 3, 5])
-            enemy.vel_x, enemy.vel_y = random_x, random_y
-            # Start them in the middle
-            enemy.rect.center = (WIDTH/2, HEIGHT/2)
-            all_sprites_group.add(enemy)
-            enemy_sprites_group.add(enemy)
-
-            for enemy in enemy_sprites_group:
-                enemy.level_up()
-
-        # Collision between Player and Enemies
-        enemies_collided = pygame.sprite.spritecollide(player, enemy_sprites_group, False)
-        for enemy in enemies_collided:
-            # decrease mario's life
+        # Enemy hits player
+        for enemy in pygame.sprite.spritecollide(player, enemy_sprites, False):
             player.calc_damage(enemy.damage)
 
-        health_bar.update_info(player.get_damage_percentage())
-
-        # Game ends when Player's health is zero or less
         if player.health <= 0:
             done = True
 
-        # ------ DRAWING TO SCREEN
-        screen.fill(WHITE)
-        all_sprites_group.draw(screen)
+        health_bar.update_info(player.health / 100)
+
+        # ---------------- DRAW
+        grass.draw(screen, camera)
+        for wall in wall_sprites:
+            screen.blit(wall.image, camera.apply(wall))
+        for block in block_sprites:
+            screen.blit(block.image, camera.apply(block))
+        for enemy in enemy_sprites:
+            screen.blit(enemy.image, camera.apply(enemy))
+        screen.blit(player.image, camera.apply(player))
         screen.blit(health_bar, (10, 10))
 
-        # Update screen
         pygame.display.flip()
+        clock.tick(60)
 
-        # ------ CLOCK TICK
-        clock.tick(60) # 60 fps
-
-    # Display final score:
-    print("Thanks for playing!")
-    print("Final score is:", player.points)
-
+    print("Game Over")
+    print("Score:", player.points)
     pygame.quit()
+
 
 if __name__ == "__main__":
     game()
